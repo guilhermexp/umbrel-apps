@@ -1,0 +1,30 @@
+manifestVersion: 1
+id: gx-glitchtip
+category: developer
+name: GlitchTip
+version: "7.0.0"
+tagline: Open source error tracking, compatible with the Sentry SDK
+description: >-
+  GlitchTip collects errors, performance data and uptime checks from your
+  applications. It speaks the Sentry protocol, so any Sentry SDK works by
+  swapping the DSN.
+
+
+  This app runs GlitchTip as a single process with PostgreSQL, without
+  Valkey, to keep memory use low.
+
+
+  Setup: after the first start, create your account on the sign-in page, then
+  create an organization and a project to get a DSN.
+developer: GlitchTip
+website: https://glitchtip.com
+dependencies: []
+repo: https://gitlab.com/glitchtip/glitchtip-backend
+support: https://gitlab.com/glitchtip/glitchtip-backend/-/issues
+port: 8271
+gallery: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+submitter: guilhermexp
+submission: https://github.com/guilhermexp/umbrel-apps

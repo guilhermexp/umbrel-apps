@@ -1,0 +1,38 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: gx-glitchtip_web_1
+      APP_PORT: 8000
+      # Sentry SDKs post events to /api/<project>/envelope/ without an Umbrel session.
+      PROXY_AUTH_WHITELIST: "/api/*"
+
+  web:
+    image: glitchtip/glitchtip:7.0.0@sha256:c245745b4179667da3aebd73fb8d4f1fd918f7d68ba07d1fd73ea688933b6e01
+    restart: on-failure
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgres://postgres:${APP_GLITCHTIP_DB_PASSWORD}@postgres:5432/postgres
+      SECRET_KEY: ${APP_GLITCHTIP_SECRET_KEY}
+      GLITCHTIP_DOMAIN: ${APP_GLITCHTIP_DOMAIN}
+      ENABLE_USER_REGISTRATION: ${APP_GLITCHTIP_REGISTRATION}
+      ENABLE_ORGANIZATION_CREATION: ${APP_GLITCHTIP_REGISTRATION}
+      VALKEY_URL: ""
+      EMAIL_URL: consolemail://
+      DEFAULT_FROM_EMAIL: glitchtip@umbrel.local
+      PORT: 8000
+
+  postgres:
+    image: postgres:17@sha256:ff87138949ad9a46f32ff23bd6852b52ce024a13dffe9b4087be98292cdd3b4f
+    restart: on-failure
+    stop_grace_period: 1m
+    command:
+      - postgres
+      - -c
+      - max_locks_per_transaction=512
+    environment:
+      POSTGRES_PASSWORD: ${APP_GLITCHTIP_DB_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
