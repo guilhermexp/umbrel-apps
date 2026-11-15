@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+: "${APP_DATA_ROOT:?Umbrel app data root is required}"
+mkdir -p "${APP_DATA_ROOT}"/{mysql,redis,fleet,logs,vulndb}
+# The upstream Fleet image runs as UID 100, GID 101.
+chown 100:101 "${APP_DATA_ROOT}/fleet" "${APP_DATA_ROOT}/logs" "${APP_DATA_ROOT}/vulndb"

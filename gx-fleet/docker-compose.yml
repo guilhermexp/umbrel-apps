@@ -1,0 +1,93 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: gx-fleet_server_1
+      APP_PORT: 1337
+      # The UI keeps Umbrel authentication. Device agents use the dedicated
+      # Tailscale HTTPS endpoint, which goes directly to Fleet's own auth.
+    networks:
+      - default
+      - backend
+
+  mysql:
+    image: mysql:8.4.8@sha256:2952e3be7807f06fc18de50b3ea1a632d5c70d63482ff7d7376fe3aa8999babf
+    platform: linux/amd64
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${APP_FLEET_MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: fleet
+      MYSQL_USER: fleet
+      MYSQL_PASSWORD: ${APP_FLEET_MYSQL_PASSWORD}
+    volumes:
+      - ${APP_DATA_ROOT}/mysql:/var/lib/mysql
+    networks:
+      - backend
+    healthcheck:
+      test: [CMD-SHELL, 'MYSQL_PWD="$${MYSQL_PASSWORD}" mysql --protocol=tcp -h 127.0.0.1 -u fleet -D fleet -Nse "SELECT 1" >/dev/null']
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    stop_grace_period: 1m
+
+  redis:
+    image: redis:7.4.7@sha256:976ab0f0939b78c06d802bcd3bea44c5142ea9a756a57b861e08819817f768c8
+    restart: unless-stopped
+    command: [redis-server, --appendonly, 'yes']
+    volumes:
+      - ${APP_DATA_ROOT}/redis:/data
+    networks:
+      - backend
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  server:
+    image: fleetdm/fleet:v4.94.1@sha256:2e82f79e0af9ae1ece931d4dedb23a0f56eda187609806b1613661b37765118c
+    platform: linux/amd64
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: [sh, -ec, '/usr/bin/fleet prepare db --no-prompt && exec /usr/bin/fleet serve']
+    environment:
+      FLEET_MYSQL_ADDRESS: mysql:3306
+      FLEET_MYSQL_DATABASE: fleet
+      FLEET_MYSQL_USERNAME: fleet
+      FLEET_MYSQL_PASSWORD: ${APP_FLEET_MYSQL_PASSWORD}
+      FLEET_REDIS_ADDRESS: redis:6379
+      FLEET_SERVER_ADDRESS: 0.0.0.0:1337
+      FLEET_SERVER_TLS: 'false'
+      FLEET_SERVER_PRIVATE_KEY: ${APP_FLEET_PRIVATE_KEY}
+      FLEET_LOGGING_JSON: 'true'
+      FLEET_OSQUERY_STATUS_LOG_PLUGIN: filesystem
+      FLEET_FILESYSTEM_STATUS_LOG_FILE: /logs/osqueryd.status.log
+      FLEET_FILESYSTEM_RESULT_LOG_FILE: /logs/osqueryd.results.log
+      FLEET_VULNERABILITIES_DATABASES_PATH: /vulndb
+    # Only host-local access for bootstrap and Tailscale Serve. The database
+    # and cache have no published ports, including on the host loopback.
+    ports:
+      - 127.0.0.1:13379:1337
+    volumes:
+      - ${APP_DATA_ROOT}/fleet:/fleet
+      - ${APP_DATA_ROOT}/logs:/logs
+      - ${APP_DATA_ROOT}/vulndb:/vulndb
+    networks:
+      - egress
+      - backend
+    healthcheck:
+      test: [CMD, wget, -qO-, http://127.0.0.1:1337/healthz]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    stop_grace_period: 30s
+
+networks:
+  default: {}
+  egress: {}
+  backend:
+    internal: true

@@ -1,0 +1,35 @@
+manifestVersion: 2
+id: gx-fleet
+category: developer
+name: Fleet
+version: "4.94.1"
+tagline: Inventory and manage your Mac, Windows and Linux devices
+description: >-
+  Fleet is an open source device management platform with hardware and software
+  inventory, live queries, policies and vulnerability visibility.
+
+
+  This installation includes Fleet, MySQL and Redis with persistent storage.
+  It uses your existing Tailscale app for private HTTPS. Open Fleet while
+  connected to Tailscale; device agents must also be able to reach this address.
+
+
+  The initial administrator is created automatically. Use the credentials shown
+  by Umbrel when opening the app. Installing the server does not enroll any
+  computers. Some Fleet capabilities require a separate Premium license.
+developer: Fleet Device Management
+website: https://fleetdm.com
+repo: https://github.com/fleetdm/fleet
+support: https://github.com/fleetdm/fleet/issues
+icon: https://raw.githubusercontent.com/guilhermexp/umbrel-apps/main/gx-fleet/icon.svg
+dependencies:
+  - tailscale
+port: 8272
+requiresHttps: true
+gallery: []
+path: ""
+defaultUsername: admin@fleet.local
+defaultPassword: ""
+deterministicPassword: true
+submitter: guilhermexp
+submission: https://github.com/guilhermexp/umbrel-apps

@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+: "${APP_DATA_ROOT:?Umbrel app data root is required}"
+[[ -f "${APP_DATA_ROOT}/tailscale-8272-owned" ]] || exit 0
+ts() { docker exec tailscale_web_1 tailscale "$@"; }
+node_name="$(ts status --json | jq -er '.Self.DNSName | rtrimstr(".")')"
+current="$(ts serve status --json | jq -r --arg key "${node_name}:8272" '.Web[$key].Handlers["/"].Proxy // empty')"
+# Remove our own port only if it still points to our own backend.
+if [[ "${current}" == http://127.0.0.1:13379 ]]; then
+  ts serve --https=8272 --set-path=/ off
+fi
+printf 'stopped\n' > "${APP_DATA_ROOT}/integration-status"

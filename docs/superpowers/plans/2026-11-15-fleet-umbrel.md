@@ -4,7 +4,7 @@
 
 **Goal:** Install Fleet as `gx-fleet` in the existing Guilherme Apps store on the physical Lenovo Umbrel, with persistent data and private HTTPS for device agents.
 
-**Architecture:** Adapt Fleet's official small-deployment Compose into a native Umbrel app containing Fleet, MySQL and Redis. Keep Umbrel app launching through its existing gateway; add only a dedicated Tailscale Serve HTTPS mapping for agent traffic, preserving the existing panel mapping. Use native lifecycle hooks for scoped integration, with no host Docker socket exposed to the Fleet containers.
+**Architecture:** Adapt Fleet's official small-deployment Compose into a native Umbrel app containing Fleet, MySQL and Redis. Keep Umbrel app launching through its existing gateway; add only a dedicated Tailscale Serve HTTPS mapping on port 8272 to the host-loopback Fleet backend on 13379 for agent traffic, preserving the existing panel mapping. Use native lifecycle hooks for scoped integration, with no host Docker socket exposed to the Fleet containers.
 
 **Tech Stack:** Fleet 4.94.1, compatible pinned MySQL 8 and Redis images, Docker Compose, Umbrel app manifests/exports/hooks, existing Tailscale node.
 
@@ -25,13 +25,13 @@
 
 Files: `gx-fleet/umbrel-app.yml`, `gx-fleet/docker-compose.yml`, `gx-fleet/exports.sh`, `gx-fleet/hooks/pre-start`, `gx-fleet/hooks/post-start`, `gx-fleet/hooks/post-stop`, `gx-fleet/hooks/pre-uninstall`, `gx-fleet/README.md`, `README.md`, `.gitignore`.
 
-- [ ] Verify native lifecycle hook execution and gateway behavior from the installed Umbrel-compatible source.
-- [ ] Resolve immutable image digests for Fleet 4.94.1, MySQL and Redis.
-- [ ] Add the manifest, Compose and secret exports. Persistent mounts live below `APP_DATA_ROOT`. Fleet DB preparation runs before serving; health checks include MySQL and Redis.
-- [ ] Add bounded hooks that create required writable app directories, integrate only the dedicated HTTPS mapping, and remove only that mapping when stopped/uninstalled. Record integration status without secret values in app-owned data.
-- [ ] Validate shell syntax and actual exported credential stability/purpose separation with temporary input; validate Compose with `docker compose config --quiet` using synthetic seeds and paths.
-- [ ] Run an isolated container smoke test where an engine is available: DB migrations, `/healthz`, Fleet version and initial setup status. Retain logs without passwords.
-- [ ] Review the complete diff, especially mounts, authentication, certificates and mapping preservation.
+- [x] Verify native lifecycle hook execution and gateway behavior from the installed Umbrel-compatible source.
+- [x] Resolve immutable image digests for Fleet 4.94.1, MySQL and Redis.
+- [x] Add the manifest, Compose and secret exports. Persistent mounts live below `APP_DATA_ROOT`. Fleet DB preparation runs before serving; health checks include MySQL and Redis.
+- [x] Add bounded hooks that create required writable app directories, integrate only the dedicated HTTPS mapping, and remove only that mapping when stopped/uninstalled. Record integration status without secret values in app-owned data.
+- [x] Validate shell syntax and actual exported credential stability/purpose separation with temporary input; validate Compose with `docker compose config --quiet` using synthetic seeds and paths.
+- [x] Run an isolated container smoke test where an engine is available: DB migrations, `/healthz`, Fleet version and initial setup status. Retain logs without passwords.
+- [x] Review the complete diff, especially mounts, authentication, certificates and mapping preservation.
 
 ### Task 2: Publish store and install
 
