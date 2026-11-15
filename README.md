@@ -9,3 +9,5 @@ Umbrel community app store.
 
 Add it in umbrelOS under **App Store → ⋯ → Community App Stores** with the URL
 `https://github.com/guilhermexp/umbrel-apps`.
+
+Fleet packaging and validation: [gx-fleet/AGENTS.md](gx-fleet/AGENTS.md).
