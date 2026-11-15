@@ -35,20 +35,28 @@ Files: `gx-fleet/umbrel-app.yml`, `gx-fleet/docker-compose.yml`, `gx-fleet/expor
 
 ### Task 2: Publish store and install
 
-- [ ] Commit reviewed files on `deploy/fleet-umbrel`, integrate to `main` and push the store update, after all locally applicable gates pass.
-- [ ] Refresh the existing community store through authenticated Umbrel UI; verify `gx-fleet` name and version before installing.
-- [ ] Install through the native app UI and wait for terminal ready state. Inspect actual application logs on failure before making changes.
-- [ ] Confirm the dedicated endpoint serves valid TLS, `/healthz` reports healthy MySQL/Redis connections, and the existing Umbrel panel remains available.
+- [x] Commit reviewed files on `deploy/fleet-umbrel`, integrate to `main` and push the store update, after all locally applicable gates pass.
+- [x] Refresh the existing community store through authenticated Umbrel UI; verify `gx-fleet` name and version before installing.
+- [x] Install through the native app UI and wait for terminal ready state. Inspect actual application logs on failure before making changes.
+- [x] Confirm the dedicated endpoint serves valid TLS, `/healthz` reports healthy MySQL/Redis connections, and the existing Umbrel panel remains available.
 
 ### Task 3: Verify user flow and persistence
 
-- [ ] Open the Fleet icon in Umbrel and observe the Fleet setup/login UI.
-- [ ] Secure the initial admin account using generated credentials, retained only in private app/local delivery storage; no password printed in logs or committed.
-- [ ] Log into Fleet and observe the dashboard with zero managed hosts; reread server setup state through normal authenticated application behavior.
-- [ ] Restart only `gx-fleet` through Umbrel, then confirm the account and settings persist and HTTPS/health return.
-- [ ] Confirm Firefox, Obsidian, Ollama, Open WebUI, Tailscale and the Umbrel panel remain available; do not restart them.
-- [ ] Record deployed commit, observed version, endpoint, tested flow, backup procedure and limits in `.tmp/verify/fleet-deploy/` and durable inventory. Finish branch cleanup without removing evidence.
+- [x] Open the Fleet icon in Umbrel and observe the Fleet setup/login UI.
+- [x] Secure the initial admin account using generated credentials, retained only in private app/local delivery storage; no password printed in logs or committed.
+- [x] Log into Fleet and observe the dashboard with zero managed hosts; reread server setup state through normal authenticated application behavior.
+- [x] Restart only `gx-fleet` through Umbrel, then confirm the account and settings persist and HTTPS/health return.
+- [x] Confirm Firefox, Obsidian, Ollama, Open WebUI, Tailscale and the Umbrel panel remain available; do not restart them.
+- [x] Record deployed commit, observed version, endpoint, tested flow, backup procedure and limits in `.tmp/verify/fleet-deploy/` and durable inventory. Finish branch cleanup without removing evidence.
 
 ## Recovery
 
 If installation fails, retain the app data and diagnose logs. Stop only `gx-fleet` when needed; never use a global Docker prune or remove existing apps. The dedicated Tailscale mapping can be disabled independently; existing HTTPS mappings must remain unchanged. Uninstalling through Umbrel deletes Fleet data and is not a debugging step. App data needs a separately tested backup before business-critical use.
+
+## Deployment result
+
+Fleet 4.94.1 (Umbrel package 4.94.1-patch.2) deployed successfully on 15 November 2026.
+Private endpoint: https://umbrel.tail5a67bd.ts.net:8272. The icon, generated
+credentials, real UI login, API configuration and app-only restart were verified.
+No managed hosts were enrolled. Detailed local evidence is in
+`.tmp/verify/fleet-deploy/evidence.md`; secrets are excluded from Git.
