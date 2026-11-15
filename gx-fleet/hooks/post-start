@@ -2,13 +2,14 @@
 set -euo pipefail
 umask 077
 : "${APP_DATA_ROOT:?Umbrel app data root is required}"
-: "${APP_PASSWORD:?Umbrel deterministic app password is required}"
+: "${APP_FLEET_ADMIN_PASSWORD:?Fleet initial admin password is required}"
 
 # This native hook runs on the Umbrel host. No Fleet container receives the
 # Docker socket, host networking, privileges or access to Tailscale state.
 ts() { docker exec tailscale_web_1 tailscale "$@"; }
 status_file="${APP_DATA_ROOT}/integration-status"
 printf 'starting\n' > "${status_file}"
+chmod 644 "${status_file}"
 node_status="$(ts status --json)"
 node_name="$(jq -er '.Self.DNSName | rtrimstr(".") | select(length > 0)' <<< "${node_status}")"
 [[ "${node_name}" == *.ts.net ]] || { echo 'Fleet: invalid Tailscale DNS name' >&2; exit 1; }
@@ -27,7 +28,7 @@ fi
 
 ready=false
 for attempt in $(seq 1 90); do
-  if curl --fail --silent --max-time 3 http://127.0.0.1:13379/healthz >/dev/null; then
+  if curl --fail --silent --show-error --max-time 3 http://127.0.0.1:13379/healthz >/dev/null; then
     ready=true
     break
   fi
@@ -56,9 +57,9 @@ setup_code="$(curl --silent --max-time 10 --output /dev/null --write-out '%{http
 if [[ "${setup_code}" == 200 ]]; then
   touch "${pending}"
   # Setup applies the starter library synchronously, via Fleet's own loopback.
-  jq -n --arg password "${APP_PASSWORD}" --arg url "http://127.0.0.1:1337" \
+  jq -n --arg password "${APP_FLEET_ADMIN_PASSWORD}" --arg url "http://127.0.0.1:1337" \
     '{admin:{name:"Guilherme",email:"admin@fleet.local",password:$password},org_info:{org_name:"Guilherme"},server_url:$url}' > "${payload}"
-  curl --fail --silent --max-time 120 -H 'Content-Type: application/json' \
+  curl --fail --silent --show-error --max-time 120 -H 'Content-Type: application/json' \
     --data-binary "@${payload}" --output "${response}" http://127.0.0.1:13379/api/v1/setup
   jq -e '.admin.email == "admin@fleet.local"' "${response}" >/dev/null
 elif [[ "${setup_code}" != 307 && "${setup_code}" != 302 ]]; then
@@ -70,14 +71,14 @@ if [[ -f "${pending}" ]]; then
   if ! jq -e '.token | type == "string" and length > 0' "${response}" >/dev/null 2>&1; then
     # Only an unfinished first bootstrap uses the initial generated password.
     # If the owner changed it, fail closed rather than reset that account.
-    jq -n --arg password "${APP_PASSWORD}" \
+    jq -n --arg password "${APP_FLEET_ADMIN_PASSWORD}" \
       '{email:"admin@fleet.local",password:$password}' > "${payload}"
-    curl --fail --silent --max-time 30 -H 'Content-Type: application/json' \
+    curl --fail --silent --show-error --max-time 30 -H 'Content-Type: application/json' \
       --data-binary "@${payload}" --output "${response}" http://127.0.0.1:13379/api/v1/fleet/login
   fi
   jq -er '"Authorization: Bearer " + (.token | select(type == "string" and length > 0))' "${response}" > "${auth_header}"
   jq -n --arg url "${public_url}" '{server_settings:{server_url:$url}}' > "${payload}"
-  curl --fail --silent --max-time 30 -X PATCH -H 'Content-Type: application/json' \
+  curl --fail --silent --show-error --max-time 30 -X PATCH -H 'Content-Type: application/json' \
     --header "@${auth_header}" --data-binary "@${payload}" --output "${response}" \
     http://127.0.0.1:13379/api/v1/fleet/config
   jq -e --arg url "${public_url}" '(.server_settings.server_url // .config.server_settings.server_url) == $url' "${response}" >/dev/null
@@ -87,6 +88,7 @@ fi
 # reachable by other tailnet peers.
 ts serve --bg --https=8272 http://127.0.0.1:13379
 printf '%s\n' "${public_url}" > "${APP_DATA_ROOT}/public-url"
+chmod 644 "${APP_DATA_ROOT}/public-url"
 printf 'owned\n' > "${APP_DATA_ROOT}/tailscale-8272-owned"
 printf 'ready\n' > "${status_file}"
 echo "Fleet ready at ${public_url}; administrator credentials are available in Umbrel."

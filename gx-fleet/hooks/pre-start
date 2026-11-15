@@ -4,3 +4,6 @@ set -euo pipefail
 mkdir -p "${APP_DATA_ROOT}"/{mysql,redis,fleet,logs,vulndb}
 # The upstream Fleet image runs as UID 100, GID 101.
 chown 100:101 "${APP_DATA_ROOT}/fleet" "${APP_DATA_ROOT}/logs" "${APP_DATA_ROOT}/vulndb"
+
+# The runtime-rendered manifest includes the initial administrator password.
+chmod 600 "${APP_DATA_DIR}/umbrel-app.yml"

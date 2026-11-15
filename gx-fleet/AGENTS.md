@@ -3,6 +3,7 @@
 This directory packages upstream Fleet; do not modify Fleet itself here.
 `umbrel-app.yml` controls the icon, URL and initial credential display.
 `docker-compose.yml` pins upstream images and isolates the database/cache.
+`umbrel-app.yml.template` renders the policy-compliant initial password.
 `exports.sh` derives secrets with Umbrel's `derive_entropy` helper; never put
 runtime secrets, Umbrel seeds, tokens or private keys in this repository.
 

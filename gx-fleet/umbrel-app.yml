@@ -2,7 +2,7 @@ manifestVersion: 2
 id: gx-fleet
 category: developer
 name: Fleet
-version: "4.94.1"
+version: "4.94.1-patch.1"
 tagline: Inventory and manage your Mac, Windows and Linux devices
 description: >-
   Fleet is an open source device management platform with hardware and software
@@ -30,6 +30,6 @@ gallery: []
 path: ""
 defaultUsername: admin@fleet.local
 defaultPassword: ""
-deterministicPassword: true
+deterministicPassword: false
 submitter: guilhermexp
 submission: https://github.com/guilhermexp/umbrel-apps
