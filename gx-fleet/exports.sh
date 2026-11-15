@@ -5,4 +5,4 @@
 export APP_FLEET_MYSQL_ROOT_PASSWORD="$(derive_entropy "${EXPORTS_APP_ID}-mysql-root")"
 export APP_FLEET_MYSQL_PASSWORD="$(derive_entropy "${EXPORTS_APP_ID}-mysql-user")"
 export APP_FLEET_PRIVATE_KEY="$(derive_entropy "${EXPORTS_APP_ID}-server-key" | openssl dgst -sha256 -binary | openssl base64 -A)"
-export APP_FLEET_ADMIN_PASSWORD="F!1$(derive_entropy "${EXPORTS_APP_ID}-initial-admin")"
+export APP_FLEET_ADMIN_PASSWORD="F!1$(derive_entropy "${EXPORTS_APP_ID}-initial-admin" | cut -c1-32)"

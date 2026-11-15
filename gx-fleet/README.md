@@ -14,7 +14,7 @@ other Serve mappings are preserved. No public internet endpoint is created.
 Open `https://YOUR-UMBREL-NAME.ts.net:8272` from a Tailscale-connected device.
 Umbrel shows the generated initial administrator credentials when opening the
 app. The username is `admin@fleet.local`; the password is derived from the private per-app seed and includes the symbol
-required by Fleet. Umbrel renders it into the private installed manifest. Change the password in Fleet if desired; subsequent starts
+required by Fleet. Its 35 characters stay below Fleet's 48-character maximum. Umbrel renders it into the private installed manifest. Change the password in Fleet if desired; subsequent starts
 do not replace an existing account. Umbrel will continue showing the initial
 password, so remember an updated password separately.
 
