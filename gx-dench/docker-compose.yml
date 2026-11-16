@@ -1,5 +1,5 @@
 x-dench: &dench
-  image: ghcr.io/guilhermexp/hermes-dench@sha256:8b0915b82ce4f24cb4dc0071c62b5107c1e07f49e91bd75932298c46074ea70a
+  image: ghcr.io/guilhermexp/hermes-dench@sha256:dbad957065ce974dc82e27f5fe8b2129a43a3e96614dc7a95a9ade8071063968
   platform: linux/amd64
   # Umbrel's app user; the hooks own the data folders for it.
   user: "1000:1000"
