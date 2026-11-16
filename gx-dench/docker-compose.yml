@@ -8,7 +8,7 @@ x-dench: &dench
   cap_drop:
     - ALL
   env_file:
-    - ${APP_DATA_ROOT}/configuration/app.env
+    - ${APP_DATA_DIR}/dench.env
   environment:
     HOME: /data/home
     HERMES_DENCH_STATE_DIR: /data/instance

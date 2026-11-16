@@ -40,5 +40,14 @@ grep -qxF "HERMES_DENCH_PUBLIC_URL=${public_url}" "${env_file}" || {
   exit 1
 }
 
+# Compose reads ${APP_DATA_DIR}/dench.env (shipped empty so Umbrel can pull
+# before this hook runs; an app update puts the placeholder back). Refresh it
+# from the master copy on every start.
+runtime_env="${APP_DATA_DIR}/dench.env"
+tmp="$(mktemp "${APP_DATA_DIR}/.dench.env.XXXXXX")"
+cat "${env_file}" > "${tmp}"
+chmod 600 "${tmp}"
+mv -f "${tmp}" "${runtime_env}"
+
 # The runtime-rendered manifest carries the initial owner password.
 chmod 600 "${APP_DATA_DIR}/umbrel-app.yml"

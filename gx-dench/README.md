@@ -29,7 +29,9 @@ password changed in Dench, so Umbrel's shown password may become outdated.
 
 1. `pre-start` creates `data/{home,instance,configuration}` for UID 1000 and,
    once, `configuration/app.env` (login, audit, owner, public URL). It refuses
-   to start if the Tailscale address no longer matches that file.
+   to start if the Tailscale address no longer matches that file, and copies it
+   to `dench.env`, the file Compose reads. `dench.env` ships empty because
+   Umbrel pulls images before any hook runs; never edit it, edit the master.
 2. `whatsapp-init` (same image, app stopped) installs the WhatsApp stack on the
    first start; afterwards it prepares the functions cache and applies only new
    WhatsApp migrations through the canonical ledger. Failure keeps Dench down.
