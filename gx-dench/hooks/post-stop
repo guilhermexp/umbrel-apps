@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+: "${APP_DATA_ROOT:?Umbrel app data root is required}"
+[[ -f "${APP_DATA_ROOT}/tailscale-owned" ]] || exit 0
+ts() { docker exec tailscale_web_1 tailscale "$@"; }
+node_name="$(ts status --json | jq -er '.Self.DNSName | rtrimstr(".")')"
+serve_status="$(ts serve status --json)"
+proxy() { jq -r --arg key "${node_name}:$1" --arg path "$2" '.Web[$key].Handlers[$path].Proxy // empty' <<< "${serve_status}"; }
+# Remove only mappings that still point to this app's own backends.
+[[ "$(proxy 8460 /terminal-ws/)" == http://127.0.0.1:13461 ]] && ts serve --https=8460 --set-path=/terminal-ws/ off
+[[ "$(proxy 8460 /)" == http://127.0.0.1:13460 ]] && ts serve --https=8460 --set-path=/ off
+[[ "$(proxy 8446 /)" == http://127.0.0.1:13446 ]] && ts serve --https=8446 --set-path=/ off
+[[ "$(proxy 8447 /)" == http://127.0.0.1:13447 ]] && ts serve --https=8447 --set-path=/ off
+printf 'stopped\n' > "${APP_DATA_ROOT}/integration-status"

@@ -1,0 +1,35 @@
+manifestVersion: 2
+id: gx-dench
+category: developer
+name: Dench
+version: "2026.11.16-d0487b97"
+tagline: CRM com agentes, WhatsApp e workspace da sua empresa
+description: >-
+  Dench reúne CRM, conversas com agentes, Drive, rotinas e o atendimento
+  do WhatsApp (WhatsApp Web pelo motor Rust e API oficial) numa instância
+  própria da sua empresa.
+
+
+  O app usa o Tailscale que já está neste Umbrel para HTTPS privado: abra o
+  Dench conectado à sua tailnet. Nada é publicado na internet.
+
+
+  A conta do dono (dono@dench.local) é criada no primeiro início, com a senha
+  mostrada pelo Umbrel. Troque a senha no Dench depois do primeiro login.
+  O WhatsApp Web é pareado pelo QR dentro do Dench.
+developer: Dench
+website: https://github.com/guilhermexp/umbrel-apps
+repo: https://github.com/guilhermexp/umbrel-apps
+support: https://github.com/guilhermexp/umbrel-apps/issues
+icon: https://raw.githubusercontent.com/guilhermexp/umbrel-apps/main/gx-dench/icon.svg
+dependencies:
+  - tailscale
+port: 8460
+requiresHttps: true
+gallery: []
+path: ""
+defaultUsername: dono@dench.local
+defaultPassword: ""
+deterministicPassword: false
+submitter: guilhermexp
+submission: https://github.com/guilhermexp/umbrel-apps

@@ -1,0 +1,76 @@
+x-dench: &dench
+  image: ghcr.io/guilhermexp/hermes-dench@sha256:11a9a65fb0e15b1ecc911b10e5b5002315a6e57389f310e82657b9687cdcb6e7
+  platform: linux/amd64
+  # Umbrel's app user; the hooks own the data folders for it.
+  user: "1000:1000"
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  env_file:
+    - ${APP_DATA_ROOT}/configuration/app.env
+  environment:
+    HOME: /data/home
+    HERMES_DENCH_STATE_DIR: /data/instance
+    HERMES_DENCH_SERVER_RUNTIME: "1"
+    HERMES_DENCH_SERVER_WEB_ORIGIN: http://127.0.0.1:3100
+    HERMES_DENCH_SERVER_UI_ORIGIN: http://127.0.0.1:5173
+    HERMES_DENCH_SERVER_API_ORIGIN: http://127.0.0.1:54321
+    OPENBSP_UI_CONFIG_PATH: /data/instance/openbsp/preview.json
+    NODE_ENV: production
+  volumes:
+    - ${APP_DATA_ROOT}:/data
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "5"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: gx-dench_app_1
+      APP_PORT: 3100
+      # Dench has its own login (owner and team); Umbrel's login stays in front
+      # of the dashboard link only.
+
+  # Runs before every start, with the app stopped: the first start installs the
+  # WhatsApp stack (Postgres, PostgREST, functions); later starts, including
+  # after an image update, apply only new WhatsApp migrations through the
+  # canonical ledger. A failure keeps the app down instead of starting on an
+  # unknown schema.
+  whatsapp-init:
+    <<: *dench
+    restart: "no"
+    command:
+      - sh
+      - -ec
+      - |
+        if [ -f /data/instance/whatsapp-native/server-install.json ]; then
+          node tools/server/whatsapp-install.mjs prepare-functions
+          node tools/server/whatsapp-install.mjs migrate
+        else
+          node tools/server/whatsapp-install.mjs
+        fi
+
+  app:
+    <<: *dench
+    restart: unless-stopped
+    stop_grace_period: 240s
+    pids_limit: 2048
+    depends_on:
+      whatsapp-init:
+        condition: service_completed_successfully
+    # Host loopback only. The post-start hook publishes them over the existing
+    # Tailscale node with private HTTPS; nothing is opened on the LAN.
+    ports:
+      - "127.0.0.1:13460:3100"
+      - "127.0.0.1:13461:13101"
+      - "127.0.0.1:13446:15173"
+      - "127.0.0.1:13447:64321"
+    healthcheck:
+      test: ["CMD", "node", "tools/server/health.mjs"]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+      start_period: 150s

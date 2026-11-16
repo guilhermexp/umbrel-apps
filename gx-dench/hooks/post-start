@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+set -euo pipefail
+umask 077
+: "${APP_DATA_ROOT:?Umbrel app data root is required}"
+: "${APP_DENCH_OWNER_PASSWORD:?Dench initial owner password is required}"
+
+ts() { docker exec tailscale_web_1 tailscale "$@"; }
+status_file="${APP_DATA_ROOT}/integration-status"
+printf 'starting\n' > "${status_file}"
+chmod 644 "${status_file}"
+trap 'result=$?; [[ ${result} == 0 ]] || printf "failed\n" > "${status_file}"' EXIT
+
+node_name="$(ts status --json | jq -er '.Self.DNSName | rtrimstr(".") | select(length > 0)')"
+[[ "${node_name}" == *.ts.net ]] || { echo 'Dench: invalid Tailscale DNS name' >&2; exit 1; }
+
+# HTTPS port on the Tailscale node -> host-loopback backend of this app.
+declare -A backends=(
+  [8460]=http://127.0.0.1:13460
+  [8446]=http://127.0.0.1:13446
+  [8447]=http://127.0.0.1:13447
+)
+serve_status="$(ts serve status --json)"
+for port in "${!backends[@]}"; do
+  current="$(jq -r --arg key "${node_name}:${port}" '.Web[$key].Handlers["/"].Proxy // empty' <<< "${serve_status}")"
+  taken="$(jq -r --arg port "${port}" '.TCP[$port] != null' <<< "${serve_status}")"
+  if [[ "${taken}" == true && "${current}" != "${backends[${port}]}" ]]; then
+    echo "Dench: Tailscale HTTPS port ${port} is already assigned to another service" >&2
+    exit 1
+  fi
+done
+
+ready=false
+for attempt in $(seq 1 300); do
+  if curl --fail --silent --max-time 3 http://127.0.0.1:13460/api/system/health >/dev/null; then
+    ready=true
+    break
+  fi
+  sleep 2
+done
+[[ "${ready}" == true ]] || { echo 'Dench: health timeout' >&2; exit 1; }
+
+# The owner's first password, once. Later starts never reset a password the
+# owner changed; Umbrel keeps showing the initial one.
+marker="${APP_DATA_ROOT}/owner-password-initialized"
+if [[ ! -f "${marker}" ]]; then
+  printf '%s\n' "${APP_DENCH_OWNER_PASSWORD}" | docker exec -i gx-dench_app_1 node web/owner-password.cjs >/dev/null
+  touch "${marker}"
+fi
+
+# Published only after the owner can log in, so no tailnet peer sees an
+# unprotected first boot. Other Serve handlers (Umbrel panel on 443, other
+# apps) are left untouched.
+ts serve --bg --https=8460 http://127.0.0.1:13460
+ts serve --bg --https=8460 --set-path=/terminal-ws/ http://127.0.0.1:13461
+ts serve --bg --https=8446 http://127.0.0.1:13446
+ts serve --bg --https=8447 http://127.0.0.1:13447
+printf 'owned\n' > "${APP_DATA_ROOT}/tailscale-owned"
+printf 'https://%s:8460\n' "${node_name}" > "${APP_DATA_ROOT}/public-url"
+chmod 644 "${APP_DATA_ROOT}/public-url"
+printf 'ready\n' > "${status_file}"
+echo "Dench ready at https://${node_name}:8460"

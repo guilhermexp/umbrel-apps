@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -euo pipefail
+umask 077
+: "${APP_DATA_ROOT:?Umbrel app data root is required}"
+: "${APP_DATA_DIR:?Umbrel app directory is required}"
+
+# Native hook on the Umbrel host. Dench containers never receive the Docker
+# socket, host networking or Tailscale state.
+ts() { docker exec tailscale_web_1 tailscale "$@"; }
+
+mkdir -p "${APP_DATA_ROOT}"/{home,instance,configuration}
+chown 1000:1000 "${APP_DATA_ROOT}" "${APP_DATA_ROOT}"/{home,instance,configuration}
+chmod 700 "${APP_DATA_ROOT}"/{home,instance,configuration}
+
+node_name="$(ts status --json | jq -er '.Self.DNSName | rtrimstr(".") | select(length > 0)')"
+[[ "${node_name}" == *.ts.net ]] || { echo 'Dench: invalid Tailscale DNS name' >&2; exit 1; }
+public_url="https://${node_name}:8460"
+
+# Written once: login, audit and the owner are on from the first boot. The
+# owner's password is set by post-start; later edits to this file are kept.
+env_file="${APP_DATA_ROOT}/configuration/app.env"
+if [[ ! -f "${env_file}" ]]; then
+  tmp="$(mktemp "${APP_DATA_ROOT}/configuration/.app.env.XXXXXX")"
+  printf '%s\n' \
+    HERMES_DENCH_CONTROL_PLANE=1 \
+    HERMES_DENCH_MULTI_TENANCY=1 \
+    HERMES_DENCH_AUTH_REQUIRED=1 \
+    HERMES_DENCH_AUDIT=1 \
+    HERMES_DENCH_OWNER_EMAIL=dono@dench.local \
+    "HERMES_DENCH_PUBLIC_URL=${public_url}" \
+    "OPENBSP_UI_ALLOWED_HOST=${node_name}" > "${tmp}"
+  chown 1000:1000 "${tmp}"
+  chmod 600 "${tmp}"
+  mv -f "${tmp}" "${env_file}"
+fi
+# The WhatsApp UI/API origins were materialized for this address. A renamed
+# Tailscale node needs a deliberate migration, never a silent mismatch.
+grep -qxF "HERMES_DENCH_PUBLIC_URL=${public_url}" "${env_file}" || {
+  echo "Dench: app.env points to another address than ${public_url}; review it before starting" >&2
+  exit 1
+}
+
+# The runtime-rendered manifest carries the initial owner password.
+chmod 600 "${APP_DATA_DIR}/umbrel-app.yml"
