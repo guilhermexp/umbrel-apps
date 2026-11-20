@@ -1,0 +1,45 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: gx-terminal_app_1
+      APP_PORT: 7681
+      # Umbrel login stays in front of the terminal: never set PROXY_AUTH_ADD
+      # to false here. The gateway also proxies the ttyd WebSocket.
+
+  app:
+    image: tsl0922/ttyd:1.7.7@sha256:9a058c087bca6df456cb728514eafe778ea384369a622b3604c8b5256b67237d
+    platform: linux/amd64
+    restart: unless-stopped
+    # Intentionally privileged with host PIDs: nsenter enters PID 1's mount,
+    # UTS, IPC, net and PID namespaces to run a root login shell on the host.
+    # This is the app's purpose; the Umbrel gateway auth is the only gate.
+    privileged: true
+    pid: host
+    command:
+      - ttyd
+      - -W
+      - -t
+      - titleFixed=Umbrel
+      - nsenter
+      - -t
+      - "1"
+      - -m
+      - -u
+      - -i
+      - -n
+      - -p
+      - --
+      - /bin/bash
+      - -l
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/7681"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    stop_grace_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"

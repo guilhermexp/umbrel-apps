@@ -1,0 +1,37 @@
+manifestVersion: 2
+id: gx-terminal
+category: developer
+name: Terminal
+version: "1.7.7"
+tagline: Shell root do host Umbrel direto no navegador
+description: >-
+  Terminal abre um shell root no host do Umbrel dentro do navegador, sem SSH,
+  chave ou senha extra: clique no ícone e caia direto no bash do sistema.
+
+
+  O app usa ttyd com nsenter para entrar nos namespaces do PID 1 do host.
+  O container é privilegiado de propósito — esse é o objetivo do app. O acesso
+  continua protegido pelo login do umbrelOS no gateway do app; qualquer pessoa
+  com sessão no painel tem root no host. Instale apenas em Umbrel de confiança.
+
+
+  Não há dados persistentes nem integração com Tailscale: o terminal fica
+  disponível apenas pelo endereço local do app no painel.
+developer: tsl0922
+website: https://github.com/tsl0922/ttyd
+repo: https://github.com/guilhermexp/umbrel-apps
+support: https://github.com/guilhermexp/umbrel-apps/issues
+icon: https://raw.githubusercontent.com/guilhermexp/umbrel-apps/main/gx-terminal/icon.svg
+dependencies: []
+port: 8273
+requiresHttps: false
+gallery: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+deterministicPassword: false
+releaseNotes: >-
+  Empacotamento inicial do ttyd 1.7.7 como terminal do host Umbrel, protegido
+  pelo login do umbrelOS.
+submitter: guilhermexp
+submission: https://github.com/guilhermexp/umbrel-apps
